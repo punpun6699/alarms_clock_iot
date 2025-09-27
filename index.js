@@ -8,7 +8,6 @@ const PORT = 3000;
 let lastData = null;
 let lastUpdate = null;
 
-// ฟังก์ชันอ่าน sensor ผ่าน Python
 function fetchSensor() {
   exec("python3 read_dht.py", (error, stdout) => {
     if (error) return console.error("Python error:", error);
@@ -27,11 +26,10 @@ function fetchSensor() {
   });
 }
 
-// เริ่มอ่าน sensor ทุก 30 วินาที
+// เริ่มอ่าน sensor และอัปเดตทุก 30 วินาที
 fetchSensor();
 setInterval(fetchSensor, 30 * 1000);
 
-// ฟังก์ชันดึง IP ของเครื่อง
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -76,6 +74,7 @@ app.get("/", (req, res) => {
           const res = await fetch('/api');
           const data = await res.json();
           if (!data.error) {
+            // อัปเดต DOM ทันที
             document.getElementById('temp').textContent = data.temperature;
             document.getElementById('hum').textContent = data.humidity;
             lastUpdate = new Date(data.updated);
@@ -91,8 +90,11 @@ app.get("/", (req, res) => {
         document.getElementById('clock').textContent = now.toLocaleTimeString();
       }
 
+      // fetch data ทุก 30 วินาที
       fetchData();
       setInterval(fetchData, 30 * 1000);
+
+      // อัปเดตนาฬิกาต่อวินาที
       updateClock();
       setInterval(updateClock, 1000);
     </script>
