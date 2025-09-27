@@ -1,5 +1,6 @@
 const express = require("express");
 const { exec } = require("child_process");
+const os = require("os");
 
 const app = express();
 const PORT = 3000;
@@ -26,9 +27,22 @@ function fetchSensor() {
   });
 }
 
-// เริ่มอ่าน sensor และอัปเดตทุก 30 วินาที
+// เริ่มอ่าน sensor ทุก 30 วินาที
 fetchSensor();
 setInterval(fetchSensor, 30 * 1000);
+
+// ฟังก์ชันดึง IP ของเครื่อง
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === "IPv4" && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return "localhost";
+}
 
 // API สำหรับ client
 app.get("/api", (req, res) => {
@@ -50,6 +64,7 @@ app.get("/", (req, res) => {
     <div style="font-family: monospace; font-size: 1.2em;">
       🌡 Temperature: <span id="temp">--</span> °C<br>
       💧 Humidity: <span id="hum">--</span> %<br>
+      ⏱ Last update: <span id="time">--</span><br>
       🕒 Current time: <span id="clock">--:--:--</span>
     </div>
 
@@ -76,11 +91,8 @@ app.get("/", (req, res) => {
         document.getElementById('clock').textContent = now.toLocaleTimeString();
       }
 
-      // fetch sensor ทุก 30 วินาที
       fetchData();
       setInterval(fetchData, 30 * 1000);
-
-      // อัปเดตนาฬิกา real-time ต่อวินาที
       updateClock();
       setInterval(updateClock, 1000);
     </script>
@@ -88,4 +100,6 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-console.log(`🚀 Server running at http://0.0.0.0:${PORT} (accessible via local IP ${PORT})`);});
+  const ip = getLocalIP();
+  console.log(`🚀 Server running at http://${ip}:${PORT}`);
+});
