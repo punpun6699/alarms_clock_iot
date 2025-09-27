@@ -3,7 +3,7 @@ let dht;
 
 try {
   dht = require("node-dht-sensor").promises;
-  console.log("✅ Using real DHT22 sensor");
+  console.log("✅ Using real DHT22 sensor v2.00");
 } catch (err) {
   console.log("⚠️  Using mock sensor (no GPIO detected)");
   dht = {
