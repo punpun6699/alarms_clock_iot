@@ -50,7 +50,6 @@ app.get("/", (req, res) => {
     <div style="font-family: monospace; font-size: 1.2em;">
       🌡 Temperature: <span id="temp">--</span> °C<br>
       💧 Humidity: <span id="hum">--</span> %<br>
-      ⏱ Last update: <span id="time">--</span><br>
       🕒 Current time: <span id="clock">--:--:--</span>
     </div>
 
