@@ -1,10 +1,17 @@
+import time
 import adafruit_dht
 import board
+import json
+import sys
 
-dht = adafruit_dht.DHT22(board.D4)  # ถ้าใช้ GPIO4
+# สร้าง object DHT22 (GPIO4 = Pin7)
+dht = adafruit_dht.DHT22(board.D4)
+
 try:
-    temperature = dht.temperature
+    temp = dht.temperature
     humidity = dht.humidity
-    print(f"Temp: {temperature:.1f} °C, Humidity: {humidity:.1f}%")
+    data = {"temperature": temp, "humidity": humidity}
+    print(json.dumps(data))
 except Exception as e:
-    print("Failed to read sensor:", e)
+    print(json.dumps({"error": str(e)}))
+    sys.exit(1)

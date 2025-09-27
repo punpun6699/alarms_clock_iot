@@ -1,43 +1,41 @@
 const express = require("express");
-
-// ตรวจสอบ sensor จริงหรือ fallback mock
-let dht;
-try {
-  dht = require("node-dht-sensor").promises;
-  console.log("✅ Using real DHT22 sensor v2.00 (not supported on Pi 5, will fail)");
-} catch (err) {
-  console.log("⚠️ Using mock sensor (no GPIO detected or Pi 5)");
-  dht = {
-    async read() {
-      return {
-        temperature: (20 + Math.random() * 5).toFixed(1),
-        humidity: (40 + Math.random() * 10).toFixed(1)
-      };
-    }
-  };
-}
+const { exec } = require("child_process");
 
 const app = express();
 const PORT = 3000;
 
-// ฟังก์ชันอ่าน sensor (mock หรือจริง)
+// ฟังก์ชันอ่านค่า DHT22 ผ่าน Python
 async function readSensor() {
-  try {
-    const data = await dht.read(); // ใช้ mock สำหรับ Pi 5
-    return data;
-  } catch (err) {
-    console.error("Sensor read error:", err);
-    return null;
-  }
+  return new Promise((resolve) => {
+    exec("python3 read_dht.py", (error, stdout, stderr) => {
+      if (error) {
+        console.error("❌ Python error:", error);
+        return resolve(null);
+      }
+      try {
+        const data = JSON.parse(stdout);
+        if (data.error) {
+          console.error("⚠️ Sensor error:", data.error);
+          resolve(null);
+        } else {
+          resolve(data);
+        }
+      } catch (e) {
+        console.error("❌ Parse error:", e, "Output:", stdout);
+        resolve(null);
+      }
+    });
+  });
 }
 
+// Route หลัก
 app.get("/", async (req, res) => {
   const data = await readSensor();
   if (data) {
     res.send(`
       <h1>DHT22 Sensor</h1>
-      <p>🌡 Temperature: ${data.temperature} °C</p>
-      <p>💧 Humidity: ${data.humidity} %</p>
+      <p>🌡 Temperature: ${data.temperature.toFixed(1)} °C</p>
+      <p>💧 Humidity: ${data.humidity.toFixed(1)} %</p>
     `);
   } else {
     res.send("<p>❌ Error reading sensor</p>");
