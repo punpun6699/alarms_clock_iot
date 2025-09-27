@@ -4,41 +4,50 @@ const { exec } = require("child_process");
 const app = express();
 const PORT = 3000;
 
-// ฟังก์ชันอ่านค่า DHT22 ผ่าน Python
-async function readSensor() {
-  return new Promise((resolve) => {
-    exec("python3 read_dht.py", (error, stdout, stderr) => {
-      if (error) {
-        console.error("❌ Python error:", error);
-        return resolve(null);
+let lastData = null;   // ค่า sensor ล่าสุด
+let lastUpdate = null; // เวลาอัปเดตล่าสุด
+
+// ฟังก์ชันอ่าน sensor ผ่าน Python
+function fetchSensor() {
+  exec("python3 read_dht.py", (error, stdout, stderr) => {
+    if (error) {
+      console.error("❌ Python error:", error);
+      return;
+    }
+    try {
+      const data = JSON.parse(stdout);
+      if (data.error) {
+        console.error("⚠️ Sensor error:", data.error);
+      } else {
+        lastData = data;
+        lastUpdate = new Date();
+        console.log(
+          `✅ Updated: ${lastUpdate.toLocaleTimeString()} | 🌡 ${data.temperature} °C 💧 ${data.humidity} %`
+        );
       }
-      try {
-        const data = JSON.parse(stdout);
-        if (data.error) {
-          console.error("⚠️ Sensor error:", data.error);
-          resolve(null);
-        } else {
-          resolve(data);
-        }
-      } catch (e) {
-        console.error("❌ Parse error:", e, "Output:", stdout);
-        resolve(null);
-      }
-    });
+    } catch (e) {
+      console.error("❌ Parse error:", e, "Output:", stdout);
+    }
   });
 }
 
+// เริ่มต้น fetch ครั้งแรก
+fetchSensor();
+
+// ตั้งเวลา fetch ใหม่ทุก 30 วินาที
+setInterval(fetchSensor, 30 * 1000);
+
 // Route หลัก
-app.get("/", async (req, res) => {
-  const data = await readSensor();
-  if (data) {
+app.get("/", (req, res) => {
+  if (lastData) {
     res.send(`
       <h1>DHT22 Sensor</h1>
-      <p>🌡 Temperature: ${data.temperature.toFixed(1)} °C</p>
-      <p>💧 Humidity: ${data.humidity.toFixed(1)} %</p>
+      <p>🌡 Temperature: ${lastData.temperature.toFixed(1)} °C</p>
+      <p>💧 Humidity: ${lastData.humidity.toFixed(1)} %</p>
+      <p>⏱ Last update: ${lastUpdate.toLocaleString()}</p>
     `);
   } else {
-    res.send("<p>❌ Error reading sensor</p>");
+    res.send("<p>❌ No sensor data available yet</p>");
   }
 });
 
