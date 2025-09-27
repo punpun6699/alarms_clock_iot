@@ -1,11 +1,12 @@
 const express = require("express");
-let dht;
 
+// ตรวจสอบ sensor จริงหรือ fallback mock
+let dht;
 try {
   dht = require("node-dht-sensor").promises;
-  console.log("✅ Using real DHT22 sensor v2.00");
+  console.log("✅ Using real DHT22 sensor v2.00 (not supported on Pi 5, will fail)");
 } catch (err) {
-  console.log("⚠️  Using mock sensor (no GPIO detected)");
+  console.log("⚠️ Using mock sensor (no GPIO detected or Pi 5)");
   dht = {
     async read() {
       return {
@@ -19,16 +20,15 @@ try {
 const app = express();
 const PORT = 3000;
 
+// ฟังก์ชันอ่าน sensor (mock หรือจริง)
 async function readSensor() {
-const sensor = require("node-dht-sensor");
-
-sensor.read(22, 4, function(err, temperature, humidity) {
-  if (!err) {
-    console.log(`Temp: ${temperature}°C, Humidity: ${humidity}%`);
-  } else {
+  try {
+    const data = await dht.read(); // ใช้ mock สำหรับ Pi 5
+    return data;
+  } catch (err) {
     console.error("Sensor read error:", err);
+    return null;
   }
-});
 }
 
 app.get("/", async (req, res) => {
