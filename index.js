@@ -53,24 +53,37 @@ app.get("/", (req, res) => {
     </div>
 
     <script>
-      async function updateData() {
+      let lastUpdate = null; // เวลาล่าสุดจาก server
+
+      async function fetchData() {
         try {
           const res = await fetch('/api');
           const data = await res.json();
           if (!data.error) {
             document.getElementById('temp').textContent = data.temperature;
             document.getElementById('hum').textContent = data.humidity;
-            document.getElementById('time').textContent = data.updated;
+            lastUpdate = new Date(data.updated);
           }
         } catch(e) {
           console.error("Fetch error:", e);
         }
       }
 
-      // อัปเดตครั้งแรก
-      updateData();
-      // อัปเดตทุก 30 วินาที
-      setInterval(updateData, 30 * 1000);
+      function updateTime() {
+        if (lastUpdate) {
+          const now = new Date();
+          const diff = Math.floor((now - lastUpdate) / 1000); // วินาทีที่ผ่านไป
+          const displayTime = new Date(lastUpdate.getTime() + diff * 1000);
+          document.getElementById('time').textContent = displayTime.toLocaleString();
+        }
+      }
+
+      // เรียก fetch ข้อมูลทุก 30 วินาที
+      fetchData();
+      setInterval(fetchData, 30 * 1000);
+
+      // อัปเดตเวลาในหน้าเว็บต่อวินาที
+      setInterval(updateTime, 1000);
     </script>
   `);
 });
