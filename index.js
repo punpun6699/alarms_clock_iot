@@ -20,19 +20,15 @@ const app = express();
 const PORT = 3000;
 
 async function readSensor() {
-  try {
-    if (dht.read) {
-      const res = await dht.read({ sensor: dht.DHT22, pin: 4 });
-      return {
-        temperature: res.temperature.toFixed(1),
-        humidity: res.humidity.toFixed(1)
-      };
-    }
-    return await dht.read(); // mock
-  } catch (err) {
+const sensor = require("node-dht-sensor");
+
+sensor.read(22, 4, function(err, temperature, humidity) {
+  if (!err) {
+    console.log(`Temp: ${temperature}°C, Humidity: ${humidity}%`);
+  } else {
     console.error("Sensor read error:", err);
-    return null;
   }
+});
 }
 
 app.get("/", async (req, res) => {
