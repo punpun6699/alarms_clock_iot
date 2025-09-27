@@ -7,6 +7,7 @@ const PORT = 3000;
 let lastData = null;
 let lastUpdate = null;
 
+// ฟังก์ชันอ่าน sensor ผ่าน Python
 function fetchSensor() {
   exec("python3 read_dht.py", (error, stdout) => {
     if (error) return console.error("Python error:", error);
@@ -29,31 +30,32 @@ function fetchSensor() {
 fetchSensor();
 setInterval(fetchSensor, 30 * 1000);
 
-// Route JSON API
+// API สำหรับ client
 app.get("/api", (req, res) => {
   if (lastData) {
     res.json({
       temperature: lastData.temperature.toFixed(1),
       humidity: lastData.humidity.toFixed(1),
-      updated: lastUpdate.toLocaleString(),
+      updated: lastUpdate.toISOString(),
     });
   } else {
     res.json({ error: "No data yet" });
   }
 });
 
-// Route หน้าเว็บ
+// หน้าเว็บ
 app.get("/", (req, res) => {
   res.send(`
-    <h1>DHT22 Sensor</h1>
-    <div>
+    <h1>DHT22 Sensor Dashboard</h1>
+    <div style="font-family: monospace; font-size: 1.2em;">
       🌡 Temperature: <span id="temp">--</span> °C<br>
       💧 Humidity: <span id="hum">--</span> %<br>
-      ⏱ Last update: <span id="time">--</span>
+      ⏱ Last update: <span id="time">--</span><br>
+      🕒 Current time: <span id="clock">--:--:--</span>
     </div>
 
     <script>
-      let lastUpdate = null; // เวลาล่าสุดจาก server
+      let lastUpdate = null;
 
       async function fetchData() {
         try {
@@ -63,31 +65,29 @@ app.get("/", (req, res) => {
             document.getElementById('temp').textContent = data.temperature;
             document.getElementById('hum').textContent = data.humidity;
             lastUpdate = new Date(data.updated);
+            document.getElementById('time').textContent = lastUpdate.toLocaleString();
           }
         } catch(e) {
           console.error("Fetch error:", e);
         }
       }
 
-      function updateTime() {
-        if (lastUpdate) {
-          const now = new Date();
-          const diff = Math.floor((now - lastUpdate) / 1000); // วินาทีที่ผ่านไป
-          const displayTime = new Date(lastUpdate.getTime() + diff * 1000);
-          document.getElementById('time').textContent = displayTime.toLocaleString();
-        }
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').textContent = now.toLocaleTimeString();
       }
 
-      // เรียก fetch ข้อมูลทุก 30 วินาที
+      // fetch sensor ทุก 30 วินาที
       fetchData();
       setInterval(fetchData, 30 * 1000);
 
-      // อัปเดตเวลาในหน้าเว็บต่อวินาที
-      setInterval(updateTime, 1000);
+      // อัปเดตนาฬิกา real-time ต่อวินาที
+      updateClock();
+      setInterval(updateClock, 1000);
     </script>
   `);
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running at http://192.168.90.11:${PORT}`);
+  console.log(\`🚀 Server running at http://192.168.90.11:${PORT}\`);
 });
