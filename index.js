@@ -22,13 +22,13 @@ const PORT = 3000;
 async function readSensor() {
   try {
     if (dht.read) {
-      const res = await dht.read({ sensor: 22, pin: 4 });
+      const res = await dht.read({ sensor: dht.DHT22, pin: 4 });
       return {
         temperature: res.temperature.toFixed(1),
         humidity: res.humidity.toFixed(1)
       };
     }
-    return await dht.read();
+    return await dht.read(); // mock
   } catch (err) {
     console.error("Sensor read error:", err);
     return null;
