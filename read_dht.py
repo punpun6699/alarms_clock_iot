@@ -1,19 +1,10 @@
-#!/usr/bin/env python3
-import Adafruit_DHT
-import sys
-import json
+import adafruit_dht
+import board
 
-# กำหนด sensor type และ GPIO pin
-SENSOR = Adafruit_DHT.DHT22
-PIN = 4  # GPIO4
-
-humidity, temperature = Adafruit_DHT.read_retry(SENSOR, PIN)
-
-if humidity is not None and temperature is not None:
-    data = {
-        "temperature": round(temperature, 1),
-        "humidity": round(humidity, 1)
-    }
-    print(json.dumps(data))
-else:
-    print(json.dumps({"error": "Failed to read sensor"}))
+dht = adafruit_dht.DHT22(board.D4)  # ถ้าใช้ GPIO4
+try:
+    temperature = dht.temperature
+    humidity = dht.humidity
+    print(f"Temp: {temperature:.1f} °C, Humidity: {humidity:.1f}%")
+except Exception as e:
+    print("Failed to read sensor:", e)
