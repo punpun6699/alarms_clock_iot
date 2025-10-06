@@ -16,9 +16,9 @@ function fetchSensor() {
       if (!data.error) {
         lastData = data;
         lastUpdate = new Date();
-        console.log(
-          `✅ ${lastUpdate.toLocaleTimeString()} | 🌡 ${data.temperature} °C 💧 ${data.humidity} %`
-        );
+        // console.log(
+        //   `✅ ${lastUpdate.toLocaleTimeString()} | 🌡 ${data.temperature} °C 💧 ${data.humidity} %`
+        // );
       } else console.error("Sensor error:", data.error);
     } catch (e) {
       console.error("Parse error:", e, "Output:", stdout);
